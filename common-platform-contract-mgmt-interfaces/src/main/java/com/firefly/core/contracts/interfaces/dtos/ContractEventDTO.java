@@ -19,7 +19,6 @@ package com.firefly.core.contracts.interfaces.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.firefly.annotations.ValidDateTime;
 import com.firefly.core.contracts.interfaces.enums.EventTypeEnum;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -48,17 +47,14 @@ public class ContractEventDTO {
     @NotNull(message = "Event type is required")
     private EventTypeEnum eventType;
 
-    @ValidDateTime
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime eventDate;
 
     private String eventDescription;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

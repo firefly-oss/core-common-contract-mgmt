@@ -17,10 +17,8 @@
 
 package com.firefly.core.contracts.interfaces.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.firefly.annotations.ValidDateTime;
 import com.firefly.core.contracts.interfaces.enums.TermValidationTypeEnum;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -63,11 +61,9 @@ public class ContractTermValidationRuleDTO {
     @Size(max = 500, message = "Error message must not exceed 500 characters")
     private String errorMessage;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

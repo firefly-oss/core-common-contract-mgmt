@@ -17,9 +17,7 @@
 
 package com.firefly.core.contracts.interfaces.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.firefly.annotations.ValidDateTime;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,19 +48,15 @@ public class ContractPartyDTO {
     @NotNull(message = "Role in contract ID is required")
     private UUID roleInContractId;
 
-    @ValidDateTime
     private LocalDateTime dateJoined;
 
-    @ValidDateTime
     private LocalDateTime dateLeft;
 
     private Boolean isActive;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

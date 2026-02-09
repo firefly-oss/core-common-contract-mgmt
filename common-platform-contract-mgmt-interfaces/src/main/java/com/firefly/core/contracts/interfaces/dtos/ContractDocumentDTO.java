@@ -19,7 +19,6 @@ package com.firefly.core.contracts.interfaces.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.firefly.annotations.ValidDateTime;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -51,14 +50,11 @@ public class ContractDocumentDTO {
     @NotNull(message = "Document ID is required")
     private UUID documentId;
 
-    @ValidDateTime
     private LocalDateTime dateAdded;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

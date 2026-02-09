@@ -17,9 +17,7 @@
 
 package com.firefly.core.contracts.interfaces.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.firefly.annotations.ValidDateTime;
 import com.firefly.core.contracts.interfaces.enums.StatusCodeEnum;
 
 import jakarta.validation.constraints.NotNull;
@@ -50,17 +48,13 @@ public class ContractStatusHistoryDTO {
     private StatusCodeEnum statusCode;
 
     @NotNull(message = "Status start date is required")
-    @ValidDateTime
     private LocalDateTime statusStartDate;
 
-    @ValidDateTime
     private LocalDateTime statusEndDate;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

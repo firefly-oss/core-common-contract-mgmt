@@ -17,10 +17,8 @@
 
 package com.firefly.core.contracts.interfaces.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.firefly.annotations.ValidDateTime;
 import com.firefly.core.contracts.interfaces.enums.TermCategoryEnum;
 import com.firefly.core.contracts.interfaces.enums.TermDataTypeEnum;
 import jakarta.validation.constraints.NotBlank;
@@ -72,11 +70,9 @@ public class ContractTermTemplateDTO {
 
     private JsonNode validationRules;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }

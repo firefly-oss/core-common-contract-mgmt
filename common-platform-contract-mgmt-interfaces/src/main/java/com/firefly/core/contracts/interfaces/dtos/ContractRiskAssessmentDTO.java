@@ -17,9 +17,7 @@
 
 package com.firefly.core.contracts.interfaces.dtos;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.firefly.annotations.ValidDateTime;
 import com.firefly.core.contracts.interfaces.enums.RiskLevelEnum;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -56,7 +54,6 @@ public class ContractRiskAssessmentDTO {
     @NotNull(message = "Risk level is required")
     private RiskLevelEnum riskLevel;
 
-    @ValidDateTime
     private LocalDateTime assessmentDate;
 
     @Size(max = 255, message = "Assessor must not exceed 255 characters")
@@ -64,11 +61,9 @@ public class ContractRiskAssessmentDTO {
 
     private String notes;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;
 
-    @ValidDateTime
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime updatedAt;
 }
