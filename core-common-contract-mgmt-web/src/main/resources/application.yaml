@@ -1,6 +1,6 @@
 spring:
   application:
-    name: common-platform-contract-mgmt
+    name: core-common-contract-mgmt
     version: 1.0.0
     description: Contract Management Core Application
     team:

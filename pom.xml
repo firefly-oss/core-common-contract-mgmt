@@ -11,20 +11,20 @@
     </parent>
 
     <groupId>com.firefly</groupId>
-    <artifactId>common-platform-contract-mgmt</artifactId>
+    <artifactId>core-common-contract-mgmt</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>common-platform-contract-mgmt-core</module>
-        <module>common-platform-contract-mgmt-interfaces</module>
-        <module>common-platform-contract-mgmt-models</module>
-        <module>common-platform-contract-mgmt-web</module>
-        <module>common-platform-contract-mgmt-sdk</module>
+        <module>core-common-contract-mgmt-core</module>
+        <module>core-common-contract-mgmt-interfaces</module>
+        <module>core-common-contract-mgmt-models</module>
+        <module>core-common-contract-mgmt-web</module>
+        <module>core-common-contract-mgmt-sdk</module>
     </modules>
 
     <properties>
-        <common-platform-contract-mgmt.version>
+        <core-common-contract-mgmt.version>
             1.0.0-SNAPSHOT
-        </common-platform-contract-mgmt.version>
+        </core-common-contract-mgmt.version>
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -44,27 +44,27 @@
             <!-- Internal modules -->
             <dependency>
                 <groupId>com.firefly</groupId>
-                <artifactId>common-platform-contract-mgmt-interfaces</artifactId>
+                <artifactId>core-common-contract-mgmt-interfaces</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.firefly</groupId>
-                <artifactId>common-platform-contract-mgmt-models</artifactId>
+                <artifactId>core-common-contract-mgmt-models</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.firefly</groupId>
-                <artifactId>common-platform-contract-mgmt-core</artifactId>
+                <artifactId>core-common-contract-mgmt-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.firefly</groupId>
-                <artifactId>common-platform-contract-mgmt-web</artifactId>
+                <artifactId>core-common-contract-mgmt-web</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.firefly</groupId>
-                <artifactId>common-platform-contract-mgmt-sdk</artifactId>
+                <artifactId>core-common-contract-mgmt-sdk</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

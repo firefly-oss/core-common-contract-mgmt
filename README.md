@@ -84,11 +84,11 @@ The microservice follows a layered architecture pattern with clear separation of
 ```
 
 ### Module Structure
-- **common-platform-contract-mgmt-web**: REST controllers and web configuration
-- **common-platform-contract-mgmt-core**: Business logic and service implementations
-- **common-platform-contract-mgmt-interfaces**: DTOs, enums, and API contracts
-- **common-platform-contract-mgmt-models**: R2DBC entities and repository interfaces
-- **common-platform-contract-mgmt-sdk**: Client SDK and OpenAPI specifications
+- **core-common-contract-mgmt-web**: REST controllers and web configuration
+- **core-common-contract-mgmt-core**: Business logic and service implementations
+- **core-common-contract-mgmt-interfaces**: DTOs, enums, and API contracts
+- **core-common-contract-mgmt-models**: R2DBC entities and repository interfaces
+- **core-common-contract-mgmt-sdk**: Client SDK and OpenAPI specifications
 
 ## Entity Relationship Diagram
 
@@ -227,28 +227,28 @@ erDiagram
 ## Project Structure
 
 ```
-common-platform-contract-mgmt/
-├── common-platform-contract-mgmt-web/          # Web layer (Controllers, REST APIs)
+core-common-contract-mgmt/
+├── core-common-contract-mgmt-web/          # Web layer (Controllers, REST APIs)
 │   ├── src/main/java/com/firefly/core/contracts/web/
 │   │   ├── controllers/                        # REST Controllers
 │   │   └── ContractApplication.java            # Main Spring Boot Application
 │   └── src/main/resources/
 │       └── application.yaml                    # Application configuration
-├── common-platform-contract-mgmt-core/         # Business logic layer
+├── core-common-contract-mgmt-core/         # Business logic layer
 │   └── src/main/java/com/firefly/core/contracts/core/
 │       ├── services/                           # Service interfaces
 │       ├── services/impl/                      # Service implementations
 │       └── mappers/                            # MapStruct mappers
-├── common-platform-contract-mgmt-interfaces/   # API contracts
+├── core-common-contract-mgmt-interfaces/   # API contracts
 │   └── src/main/java/com/firefly/core/contracts/interfaces/
 │       ├── dtos/                               # Data Transfer Objects
 │       └── enums/                              # Enumerations
-├── common-platform-contract-mgmt-models/       # Data layer
+├── core-common-contract-mgmt-models/       # Data layer
 │   └── src/main/java/com/firefly/core/contracts/models/
 │       ├── entities/                           # R2DBC Entities
 │       ├── repositories/                       # Repository interfaces
 │       └── resources/db/migration/             # Flyway migrations
-└── common-platform-contract-mgmt-sdk/          # Client SDK
+└── core-common-contract-mgmt-sdk/          # Client SDK
     └── src/main/resources/api-spec/
         └── openapi.yml                         # OpenAPI specification
 ```
@@ -265,8 +265,8 @@ common-platform-contract-mgmt/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/firefly-oss/common-platform-contract-mgmt.git
-cd common-platform-contract-mgmt
+git clone https://github.com/firefly-oss/core-common-contract-mgmt.git
+cd core-common-contract-mgmt
 ```
 
 ### 2. Database Setup
@@ -300,7 +300,7 @@ export SERVER_PORT=8080
 mvn clean install
 
 # Run the application
-cd common-platform-contract-mgmt-web
+cd core-common-contract-mgmt-web
 mvn spring-boot:run
 ```
 
@@ -325,7 +325,7 @@ The application supports multiple profiles for different environments:
 ```yaml
 spring:
   application:
-    name: common-platform-contract-mgmt
+    name: core-common-contract-mgmt
     version: 1.0.0
     description: Contract Management Core Application
 
@@ -429,7 +429,7 @@ The microservice provides comprehensive REST APIs for contract management:
 The complete API specification is available at:
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON**: http://localhost:8080/v3/api-docs
-- **OpenAPI YAML**: Available in `common-platform-contract-mgmt-sdk/src/main/resources/api-spec/openapi.yml`
+- **OpenAPI YAML**: Available in `core-common-contract-mgmt-sdk/src/main/resources/api-spec/openapi.yml`
 
 ### Example API Usage
 
@@ -462,7 +462,7 @@ curl -X POST http://localhost:8080/api/v1/contracts/550e8400-e29b-41d4-a716-4466
 ### Database Migrations
 
 Database schema is managed using Flyway migrations located in:
-`common-platform-contract-mgmt-models/src/main/resources/db/migration/`
+`core-common-contract-mgmt-models/src/main/resources/db/migration/`
 
 - `V1__Create_Enums.sql` - Creates all enumeration types
 - `V2__Create_Tables.sql` - Creates all tables and relationships
@@ -523,7 +523,7 @@ mvn test jacoco:report
 ```dockerfile
 FROM openjdk:17-jre-slim
 
-COPY target/common-platform-contract-mgmt-web-*.jar app.jar
+COPY target/core-common-contract-mgmt-web-*.jar app.jar
 
 EXPOSE 8080
 
