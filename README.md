@@ -5,7 +5,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-green.svg)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
 
-A contract management microservice that is part of the **Firefly OpenCore Platform** - an open-source core banking platform developed by Firefly Software Solutions Inc. This microservice manages relationships between customers (parties) and financial products, including contract lifecycle management, party roles, and dynamic contract terms.
+A contract management microservice that is part of the **Firefly OpenCore Platform** - an open-source core banking platform developed by Firefly Software Foundation. This microservice manages relationships between customers (parties) and financial products, including contract lifecycle management, party roles, and dynamic contract terms.
 
 ## Overview
 
@@ -586,7 +586,7 @@ We welcome contributions to the Firefly OpenCore Platform! Please follow these g
 This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
 
 ```
-Copyright 2024 Firefly Software Solutions Inc
+Copyright 2024 Firefly Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
