@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>core-common-contract-mgmt-models</artifactId>
+    <name>core-common-contract-mgmt-models</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

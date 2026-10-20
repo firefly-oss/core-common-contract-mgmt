@@ -12,6 +12,7 @@
     </parent>
 
     <artifactId>core-common-contract-mgmt</artifactId>
+    <name>core-common-contract-mgmt</name>
     <packaging>pom</packaging>
     <modules>
         <module>core-common-contract-mgmt-core</module>
