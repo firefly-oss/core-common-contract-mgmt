@@ -242,22 +242,22 @@ erDiagram
 ```
 core-common-contract-mgmt/
 ├── core-common-contract-mgmt-web/          # Web layer (Controllers, REST APIs)
-│   ├── src/main/java/com/firefly/core/contracts/web/
+│   ├── src/main/java/io/fireflysoftware/core/contracts/web/
 │   │   ├── controllers/                        # REST Controllers
 │   │   └── ContractApplication.java            # Main Spring Boot Application
 │   └── src/main/resources/
 │       └── application.yaml                    # Application configuration
 ├── core-common-contract-mgmt-core/         # Business logic layer
-│   └── src/main/java/com/firefly/core/contracts/core/
+│   └── src/main/java/io/fireflysoftware/core/contracts/core/
 │       ├── services/                           # Service interfaces
 │       ├── services/impl/                      # Service implementations
 │       └── mappers/                            # MapStruct mappers
 ├── core-common-contract-mgmt-interfaces/   # API contracts
-│   └── src/main/java/com/firefly/core/contracts/interfaces/
+│   └── src/main/java/io/fireflysoftware/core/contracts/interfaces/
 │       ├── dtos/                               # Data Transfer Objects
 │       └── enums/                              # Enumerations
 ├── core-common-contract-mgmt-models/       # Data layer
-│   └── src/main/java/com/firefly/core/contracts/models/
+│   └── src/main/java/io/fireflysoftware/core/contracts/models/
 │       ├── entities/                           # R2DBC Entities
 │       ├── repositories/                       # Repository interfaces
 │       └── resources/db/migration/             # Flyway migrations
