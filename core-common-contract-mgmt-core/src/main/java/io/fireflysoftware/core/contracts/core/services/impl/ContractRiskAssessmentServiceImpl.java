@@ -63,11 +63,15 @@ public class ContractRiskAssessmentServiceImpl implements ContractRiskAssessment
     public Mono<ContractRiskAssessmentDTO> updateContractRiskAssessment(UUID contractRiskAssessmentId, ContractRiskAssessmentDTO contractRiskAssessmentDTO) {
         return repository.findById(contractRiskAssessmentId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Contract risk assessment not found with ID: " + contractRiskAssessmentId)))
-                .flatMap(existingAssessment -> {
-                    ContractRiskAssessment updatedAssessment = mapper.toEntity(contractRiskAssessmentDTO);
-                    updatedAssessment.setContractRiskAssessmentId(contractRiskAssessmentId);
-                    return repository.save(updatedAssessment);
-                })
+                .flatMap(existingAssessment -> ContractScope.requireSame(
+                                contractRiskAssessmentDTO.getContractId(), existingAssessment.getContractId(), existingAssessment,
+                                "Contract risk assessment", contractRiskAssessmentId)
+                        .flatMap(owned -> {
+                            ContractRiskAssessment updatedAssessment = mapper.toEntity(contractRiskAssessmentDTO);
+                            updatedAssessment.setContractRiskAssessmentId(contractRiskAssessmentId);
+                            updatedAssessment.setContractId(owned.getContractId());
+                            return repository.save(updatedAssessment);
+                        }))
                 .map(mapper::toDTO);
     }
 

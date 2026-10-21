@@ -63,11 +63,15 @@ public class ContractDocumentServiceImpl implements ContractDocumentService {
     public Mono<ContractDocumentDTO> updateContractDocument(UUID contractDocumentId, ContractDocumentDTO contractDocumentDTO) {
         return repository.findById(contractDocumentId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Contract document not found with ID: " + contractDocumentId)))
-                .flatMap(existingDocument -> {
-                    ContractDocument updatedDocument = mapper.toEntity(contractDocumentDTO);
-                    updatedDocument.setContractDocumentId(contractDocumentId);
-                    return repository.save(updatedDocument);
-                })
+                .flatMap(existingDocument -> ContractScope.requireSame(
+                                contractDocumentDTO.getContractId(), existingDocument.getContractId(), existingDocument,
+                                "Contract document", contractDocumentId)
+                        .flatMap(owned -> {
+                            ContractDocument updatedDocument = mapper.toEntity(contractDocumentDTO);
+                            updatedDocument.setContractDocumentId(contractDocumentId);
+                            updatedDocument.setContractId(owned.getContractId());
+                            return repository.save(updatedDocument);
+                        }))
                 .map(mapper::toDTO);
     }
 

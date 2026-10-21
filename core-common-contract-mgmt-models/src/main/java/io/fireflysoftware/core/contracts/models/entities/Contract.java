@@ -17,6 +17,7 @@
 
 package io.fireflysoftware.core.contracts.models.entities;
 
+import io.fireflysoftware.core.contracts.interfaces.enums.ContractLinkKind;
 import io.fireflysoftware.core.contracts.interfaces.enums.ContractStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,6 +63,15 @@ public class Contract {
 
     @Column("product_id")
     private UUID productId;
+
+    @Column("currency_code")
+    private String currencyCode;
+
+    @Column("predecessor_contract_id")
+    private UUID predecessorContractId;
+
+    @Column("link_kind")
+    private ContractLinkKind linkKind;
 
     @CreatedDate
     @Column("created_at")

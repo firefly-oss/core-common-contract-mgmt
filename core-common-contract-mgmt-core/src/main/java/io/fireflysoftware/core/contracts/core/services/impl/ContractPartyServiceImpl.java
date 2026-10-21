@@ -63,11 +63,15 @@ public class ContractPartyServiceImpl implements ContractPartyService {
     public Mono<ContractPartyDTO> updateContractParty(UUID contractPartyId, ContractPartyDTO contractPartyDTO) {
         return repository.findById(contractPartyId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Contract party not found with ID: " + contractPartyId)))
-                .flatMap(existingParty -> {
-                    ContractParty updatedParty = mapper.toEntity(contractPartyDTO);
-                    updatedParty.setContractPartyId(contractPartyId);
-                    return repository.save(updatedParty);
-                })
+                .flatMap(existingParty -> ContractScope.requireSame(
+                                contractPartyDTO.getContractId(), existingParty.getContractId(), existingParty,
+                                "Contract party", contractPartyId)
+                        .flatMap(owned -> {
+                            ContractParty updatedParty = mapper.toEntity(contractPartyDTO);
+                            updatedParty.setContractPartyId(contractPartyId);
+                            updatedParty.setContractId(owned.getContractId());
+                            return repository.save(updatedParty);
+                        }))
                 .map(mapper::toDTO);
     }
 

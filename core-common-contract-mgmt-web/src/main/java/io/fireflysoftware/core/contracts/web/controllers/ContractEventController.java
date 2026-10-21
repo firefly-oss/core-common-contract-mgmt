@@ -60,6 +60,10 @@ public class ContractEventController {
             @Parameter(description = "ID of the contract", required = true)
             @PathVariable UUID contractId,
             @Valid @RequestBody FilterRequest<ContractEventDTO> filterRequest) {
+        if (filterRequest.getFilters() == null) {
+            filterRequest.setFilters(new ContractEventDTO());
+        }
+        filterRequest.getFilters().setContractId(contractId);
         return ResponseEntity.ok(contractEventService.filterContractEvents(filterRequest));
     }
 
@@ -103,7 +107,9 @@ public class ContractEventController {
             @Parameter(description = "ID of the contract event to retrieve", required = true)
             @PathVariable UUID contractEventId) {
         return ResponseEntity.ok(contractEventService.getContractEventById(contractEventId)
-                .filter(event -> event.getContractId().equals(contractId)));
+                .filter(event -> contractId.equals(event.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract event with ID " + contractEventId + " does not belong to contract " + contractId))));
     }
 
     @Operation(summary = "Update contract event", description = "Updates an existing contract event with the provided information")
@@ -146,7 +152,9 @@ public class ContractEventController {
             @Parameter(description = "ID of the contract event to delete", required = true)
             @PathVariable UUID contractEventId) {
         return contractEventService.getContractEventById(contractEventId)
-                .filter(event -> event.getContractId().equals(contractId))
+                .filter(event -> contractId.equals(event.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract event with ID " + contractEventId + " does not belong to contract " + contractId)))
                 .flatMap(event -> contractEventService.deleteContractEvent(contractEventId))
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }

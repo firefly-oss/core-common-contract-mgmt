@@ -58,7 +58,7 @@ public interface ContractTermValidationRuleRepository extends BaseRepository<Con
     /**
      * Count validation rules for a term template
      */
-    Mono<Long> countByTermTemplateId(Long termTemplateId);
+    Mono<Long> countByTermTemplateId(UUID termTemplateId);
 
     /**
      * Count validation rules by validation type

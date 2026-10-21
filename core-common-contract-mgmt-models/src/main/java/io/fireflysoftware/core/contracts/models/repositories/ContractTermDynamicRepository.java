@@ -100,12 +100,12 @@ public interface ContractTermDynamicRepository extends BaseRepository<ContractTe
     /**
      * Count active terms for a contract
      */
-    Mono<Long> countByContractIdAndIsActive(Long contractId, Boolean isActive);
+    Mono<Long> countByContractIdAndIsActive(UUID contractId, Boolean isActive);
 
     /**
      * Count terms by term template
      */
-    Mono<Long> countByTermTemplateId(Long termTemplateId);
+    Mono<Long> countByTermTemplateId(UUID termTemplateId);
 
     /**
      * Find latest term for a contract and template

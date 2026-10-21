@@ -60,6 +60,10 @@ public class ContractRiskAssessmentController {
             @Parameter(description = "ID of the contract", required = true)
             @PathVariable UUID contractId,
             @Valid @RequestBody FilterRequest<ContractRiskAssessmentDTO> filterRequest) {
+        if (filterRequest.getFilters() == null) {
+            filterRequest.setFilters(new ContractRiskAssessmentDTO());
+        }
+        filterRequest.getFilters().setContractId(contractId);
         return ResponseEntity.ok(contractRiskAssessmentService.filterContractRiskAssessments(filterRequest));
     }
 
@@ -103,7 +107,9 @@ public class ContractRiskAssessmentController {
             @Parameter(description = "ID of the contract risk assessment to retrieve", required = true)
             @PathVariable UUID contractRiskAssessmentId) {
         return ResponseEntity.ok(contractRiskAssessmentService.getContractRiskAssessmentById(contractRiskAssessmentId)
-                .filter(assessment -> assessment.getContractId().equals(contractId)));
+                .filter(assessment -> contractId.equals(assessment.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract risk assessment with ID " + contractRiskAssessmentId + " does not belong to contract " + contractId))));
     }
 
     @Operation(summary = "Update contract risk assessment", description = "Updates an existing contract risk assessment with the provided information")
@@ -146,7 +152,9 @@ public class ContractRiskAssessmentController {
             @Parameter(description = "ID of the contract risk assessment to delete", required = true)
             @PathVariable UUID contractRiskAssessmentId) {
         return contractRiskAssessmentService.getContractRiskAssessmentById(contractRiskAssessmentId)
-                .filter(assessment -> assessment.getContractId().equals(contractId))
+                .filter(assessment -> contractId.equals(assessment.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract risk assessment with ID " + contractRiskAssessmentId + " does not belong to contract " + contractId)))
                 .flatMap(assessment -> contractRiskAssessmentService.deleteContractRiskAssessment(contractRiskAssessmentId))
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }

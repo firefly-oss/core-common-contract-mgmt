@@ -6,6 +6,9 @@ servers:
 - url: http://localhost:18080
   description: Generated server url
 tags:
+- name: Contract lines
+  description: Products on an agreement. The contract product id follows the primary
+    line.
 - name: Contracts
   description: API for managing contracts
 - name: Contract Parties
@@ -516,6 +519,105 @@ paths:
           description: Contract party not found
         "500":
           description: Internal server error
+  /api/v1/contracts/{contractId}/lines/{contractLineId}:
+    get:
+      tags:
+      - Contract lines
+      summary: Get a contract line
+      operationId: get
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: contractLineId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLineDTO"
+    put:
+      tags:
+      - Contract lines
+      summary: Replace a contract line
+      operationId: update
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: contractLineId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractLineDTO"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLineDTO"
+    delete:
+      tags:
+      - Contract lines
+      summary: Remove a contract line
+      operationId: delete
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: contractLineId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
   /api/v1/contracts/{contractId}/events/{contractEventId}:
     get:
       tags:
@@ -1407,6 +1509,72 @@ paths:
           description: Contract not found
         "500":
           description: Internal server error
+  /api/v1/contracts/{contractId}/lines/filter:
+    post:
+      tags:
+      - Contract lines
+      summary: Filter contract lines
+      operationId: filter
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilterRequestContractLineDTO"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginationResponseContractLineDTO"
+  /api/v1/contracts/{contractId}/lines:
+    post:
+      tags:
+      - Contract lines
+      summary: Add a product line
+      operationId: create
+      parameters:
+      - name: contractId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContractLineDTO"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractLineDTO"
   /api/v1/contracts/{contractId}/events/filter:
     post:
       tags:
@@ -2018,6 +2186,45 @@ components:
           type: string
           format: date-time
           readOnly: true
+    ContractLineDTO:
+      required:
+      - productId
+      type: object
+      properties:
+        contractLineId:
+          type: string
+          format: uuid
+          readOnly: true
+        contractId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        lineRole:
+          maxLength: 50
+          minLength: 0
+          type: string
+        quantity:
+          minimum: 0.0
+          exclusiveMinimum: false
+          type: number
+        effectiveFrom:
+          type: string
+          format: date-time
+        effectiveTo:
+          type: string
+          format: date-time
+        isPrimary:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
     ContractEventDTO:
       required:
       - contractId
@@ -2127,6 +2334,17 @@ components:
         productId:
           type: string
           format: uuid
+        currencyCode:
+          pattern: "^[A-Z]{3}$"
+          type: string
+        predecessorContractId:
+          type: string
+          format: uuid
+        linkKind:
+          type: string
+          enum:
+          - AMENDMENT
+          - RENEWAL
         createdAt:
           type: string
           format: date-time
@@ -2374,6 +2592,42 @@ components:
         options:
           $ref: "#/components/schemas/FilterOptions"
       description: Generic filter request that includes both filter criteria and pagination
+    FilterRequestContractLineDTO:
+      required:
+      - pagination
+      type: object
+      properties:
+        filters:
+          $ref: "#/components/schemas/ContractLineDTO"
+        rangeFilters:
+          $ref: "#/components/schemas/RangeFilter"
+        pagination:
+          $ref: "#/components/schemas/PaginationRequest"
+        options:
+          $ref: "#/components/schemas/FilterOptions"
+      description: Generic filter request that includes both filter criteria and pagination
+    PaginationResponseContractLineDTO:
+      type: object
+      properties:
+        content:
+          type: array
+          description: The list of items for the current page.
+          items:
+            $ref: "#/components/schemas/ContractLineDTO"
+        totalElements:
+          type: integer
+          description: The total number of elements across all pages.
+          format: int64
+        totalPages:
+          type: integer
+          description: The total number of pages based on the data size and page size.
+          format: int32
+        currentPage:
+          type: integer
+          description: "The current page number, typically zero-based."
+          format: int32
+      description: Represents a paginated response containing a list of items and
+        pagination metadata.
     FilterRequestContractEventDTO:
       required:
       - pagination

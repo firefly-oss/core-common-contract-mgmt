@@ -29,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -55,6 +57,7 @@ public class ContractTermDynamicServiceImpl implements ContractTermDynamicServic
     public Mono<ContractTermDynamicDTO> createContractTermDynamic(ContractTermDynamicDTO contractTermDynamicDTO) {
         return Mono.just(contractTermDynamicDTO)
                 .map(mapper::toEntity)
+                .flatMap(this::rejectOverlap)
                 .flatMap(repository::save)
                 .map(mapper::toDTO);
     }
@@ -63,12 +66,52 @@ public class ContractTermDynamicServiceImpl implements ContractTermDynamicServic
     public Mono<ContractTermDynamicDTO> updateContractTermDynamic(UUID termId, ContractTermDynamicDTO contractTermDynamicDTO) {
         return repository.findById(termId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Contract term dynamic not found with ID: " + termId)))
-                .flatMap(existingTerm -> {
-                    ContractTermDynamic updatedTerm = mapper.toEntity(contractTermDynamicDTO);
-                    updatedTerm.setTermId(termId);
-                    return repository.save(updatedTerm);
-                })
+                .flatMap(existingTerm -> ContractScope.requireSame(
+                                contractTermDynamicDTO.getContractId(), existingTerm.getContractId(), existingTerm,
+                                "Contract term", termId)
+                        .flatMap(owned -> {
+                            ContractTermDynamic updatedTerm = mapper.toEntity(contractTermDynamicDTO);
+                            updatedTerm.setTermId(termId);
+                            updatedTerm.setContractId(owned.getContractId());
+                            return rejectOverlap(updatedTerm);
+                        }))
+                .flatMap(repository::save)
                 .map(mapper::toDTO);
+    }
+
+    /**
+     * Two active values of the same term cannot cover the same interval.
+     * An amendment expires the current row and then adds the next one.
+     */
+    private Mono<ContractTermDynamic> rejectOverlap(ContractTermDynamic candidate) {
+        if (Boolean.FALSE.equals(candidate.getIsActive())
+                || candidate.getContractId() == null
+                || candidate.getTermTemplateId() == null) {
+            return Mono.just(candidate);
+        }
+        LocalDateTime now = LocalDateTime.now();
+        return repository.findByContractIdAndTermTemplateIdAndIsActive(
+                        candidate.getContractId(), candidate.getTermTemplateId(), true)
+                .filter(existing -> candidate.getTermId() == null || !candidate.getTermId().equals(existing.getTermId()))
+                .filter(existing -> overlaps(candidate, existing, now))
+                .hasElements()
+                .flatMap(overlap -> {
+                    if (overlap) {
+                        return Mono.error(new RuntimeException(
+                                "An active term for template " + candidate.getTermTemplateId()
+                                        + " already covers this period on contract " + candidate.getContractId()
+                                        + "; expire the current term before adding another"));
+                    }
+                    return Mono.just(candidate);
+                });
+    }
+
+    private static boolean overlaps(ContractTermDynamic left, ContractTermDynamic right, LocalDateTime now) {
+        LocalDateTime leftStart = left.getEffectiveDate() != null ? left.getEffectiveDate() : now;
+        LocalDateTime rightStart = right.getEffectiveDate() != null ? right.getEffectiveDate() : now;
+        LocalDateTime leftEnd = left.getExpirationDate() != null ? left.getExpirationDate() : LocalDateTime.MAX;
+        LocalDateTime rightEnd = right.getExpirationDate() != null ? right.getExpirationDate() : LocalDateTime.MAX;
+        return leftStart.isBefore(rightEnd) && rightStart.isBefore(leftEnd);
     }
 
     @Override

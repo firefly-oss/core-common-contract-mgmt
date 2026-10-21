@@ -77,7 +77,9 @@ public interface ContractStatusHistoryRepository extends BaseRepository<Contract
     /**
      * Count status changes for a contract
      */
-    Mono<Long> countByContractId(Long contractId);
+    Mono<Long> countByContractId(UUID contractId);
+
+    Flux<ContractStatusHistory> findByContractIdAndStatusEndDateIsNull(UUID contractId);
 
     /**
      * Find contracts that had a specific status within a date range

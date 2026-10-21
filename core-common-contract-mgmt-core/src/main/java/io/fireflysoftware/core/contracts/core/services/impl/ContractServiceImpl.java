@@ -23,12 +23,18 @@ import org.fireflyframework.core.queries.PaginationResponse;
 import io.fireflysoftware.core.contracts.core.mappers.ContractMapper;
 import io.fireflysoftware.core.contracts.core.services.ContractService;
 import io.fireflysoftware.core.contracts.interfaces.dtos.ContractDTO;
+import io.fireflysoftware.core.contracts.interfaces.enums.ContractLinkKind;
+import io.fireflysoftware.core.contracts.interfaces.enums.ContractStatusEnum;
 import io.fireflysoftware.core.contracts.models.entities.Contract;
+import io.fireflysoftware.core.contracts.models.entities.ContractStatusHistory;
 import io.fireflysoftware.core.contracts.models.repositories.ContractRepository;
+import io.fireflysoftware.core.contracts.models.repositories.ContractStatusHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -40,6 +46,12 @@ public class ContractServiceImpl implements ContractService {
 
     @Autowired
     private ContractMapper mapper;
+
+    @Autowired
+    private ContractStatusHistoryRepository statusHistoryRepository;
+
+    @Autowired
+    private ContractLineSync lineSync;
 
     @Override
     public Mono<PaginationResponse<ContractDTO>> filterContracts(FilterRequest<ContractDTO> filterRequest) {
@@ -55,7 +67,14 @@ public class ContractServiceImpl implements ContractService {
     public Mono<ContractDTO> createContract(ContractDTO contractDTO) {
         return Mono.just(contractDTO)
                 .map(mapper::toEntity)
-                .flatMap(repository::save)
+                .flatMap(contract -> {
+                    if (contract.getContractStatus() == null) {
+                        contract.setContractStatus(ContractStatusEnum.DRAFT);
+                    }
+                    return requireCurrencyAndLink(contract.getContractId(), contract)
+                            .then(Mono.defer(() -> repository.save(contract)
+                                    .flatMap(saved -> alignProduct(saved).flatMap(this::recordStatus))));
+                })
                 .map(mapper::toDTO);
     }
 
@@ -66,7 +85,23 @@ public class ContractServiceImpl implements ContractService {
                 .flatMap(existingContract -> {
                     Contract updatedContract = mapper.toEntity(contractDTO);
                     updatedContract.setContractId(contractId);
-                    return repository.save(updatedContract);
+                    ContractStatusEnum current = existingContract.getContractStatus() != null
+                            ? existingContract.getContractStatus()
+                            : ContractStatusEnum.DRAFT;
+                    if (updatedContract.getContractStatus() == null) {
+                        updatedContract.setContractStatus(current);
+                    }
+                    if (updatedContract.getContractStatus() != current
+                            && !ContractLifecycle.canTransition(current, updatedContract.getContractStatus())) {
+                        return Mono.error(new RuntimeException(
+                                "Contract " + contractId + " cannot move from " + current
+                                        + " to " + updatedContract.getContractStatus()));
+                    }
+                    boolean statusChanged = updatedContract.getContractStatus() != current;
+                    return requireCurrencyAndLink(contractId, updatedContract)
+                            .then(Mono.defer(() -> repository.save(updatedContract)
+                                    .flatMap(this::alignProduct)
+                                    .flatMap(saved -> statusChanged ? recordStatus(saved) : Mono.just(saved))));
                 })
                 .map(mapper::toDTO);
     }
@@ -75,7 +110,62 @@ public class ContractServiceImpl implements ContractService {
     public Mono<Void> deleteContract(UUID contractId) {
         return repository.findById(contractId)
                 .switchIfEmpty(Mono.error(new RuntimeException("Contract not found with ID: " + contractId)))
-                .flatMap(contract -> repository.deleteById(contractId));
+                .flatMap(contract -> {
+                    ContractStatusEnum status = contract.getContractStatus() != null
+                            ? contract.getContractStatus()
+                            : ContractStatusEnum.DRAFT;
+                    if (status != ContractStatusEnum.DRAFT) {
+                        return Mono.error(new RuntimeException(
+                                "Contract " + contractId + " is " + status
+                                        + " and cannot be deleted; terminate or cancel it so the commercial history is kept"));
+                    }
+                    return repository.deleteById(contractId);
+                });
+    }
+
+    private Mono<Contract> alignProduct(Contract saved) {
+        if (saved.getProductId() == null) {
+            return Mono.just(saved);
+        }
+        return lineSync.alignPrimaryLine(saved);
+    }
+
+    private Mono<Void> requireCurrencyAndLink(UUID selfId, Contract contract) {
+        if (contract.getCurrencyCode() != null && !contract.getCurrencyCode().matches("^[A-Z]{3}$")) {
+            return Mono.error(new RuntimeException("Currency must be a 3-letter ISO code"));
+        }
+        UUID predecessor = contract.getPredecessorContractId();
+        ContractLinkKind kind = contract.getLinkKind();
+        if (predecessor == null && kind == null) {
+            return Mono.empty();
+        }
+        if (predecessor == null || kind == null) {
+            return Mono.error(new RuntimeException(
+                    "A predecessor contract and a link kind of AMENDMENT or RENEWAL are both required"));
+        }
+        if (predecessor.equals(selfId) || predecessor.equals(contract.getContractId())) {
+            return Mono.error(new RuntimeException("A contract cannot link to itself"));
+        }
+        return repository.findById(predecessor)
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Predecessor contract not found with ID: " + predecessor)))
+                .then();
+    }
+
+    private Mono<Contract> recordStatus(Contract contract) {
+        LocalDateTime now = LocalDateTime.now();
+        ContractStatusHistory next = ContractStatusHistory.builder()
+                .contractId(contract.getContractId())
+                .statusCode(ContractLifecycle.historyCode(contract.getContractStatus()))
+                .statusStartDate(now)
+                .build();
+        return statusHistoryRepository.findByContractIdAndStatusEndDateIsNull(contract.getContractId())
+                .flatMap(open -> {
+                    open.setStatusEndDate(now);
+                    return statusHistoryRepository.save(open);
+                })
+                .then(statusHistoryRepository.save(next))
+                .thenReturn(contract);
     }
 
     @Override

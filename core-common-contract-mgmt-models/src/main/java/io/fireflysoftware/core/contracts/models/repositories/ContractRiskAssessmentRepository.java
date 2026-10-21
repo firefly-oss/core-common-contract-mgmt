@@ -92,7 +92,7 @@ public interface ContractRiskAssessmentRepository extends BaseRepository<Contrac
     /**
      * Count assessments for a contract
      */
-    Mono<Long> countByContractId(Long contractId);
+    Mono<Long> countByContractId(UUID contractId);
 
     /**
      * Find assessments by contract and risk level

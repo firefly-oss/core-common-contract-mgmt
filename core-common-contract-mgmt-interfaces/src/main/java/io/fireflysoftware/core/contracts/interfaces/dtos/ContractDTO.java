@@ -19,8 +19,10 @@ package io.fireflysoftware.core.contracts.interfaces.dtos;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.fireflysoftware.core.contracts.interfaces.enums.ContractLinkKind;
 import io.fireflysoftware.core.contracts.interfaces.enums.ContractStatusEnum;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,6 +57,13 @@ public class ContractDTO {
     private UUID productCatalogId;
 
     private UUID productId;
+
+    @Pattern(regexp = "^[A-Z]{3}$", message = "Currency must be a 3-letter ISO code")
+    private String currencyCode;
+
+    private UUID predecessorContractId;
+
+    private ContractLinkKind linkKind;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime createdAt;

@@ -60,6 +60,10 @@ public class ContractStatusHistoryController {
             @Parameter(description = "ID of the contract", required = true)
             @PathVariable UUID contractId,
             @Valid @RequestBody FilterRequest<ContractStatusHistoryDTO> filterRequest) {
+        if (filterRequest.getFilters() == null) {
+            filterRequest.setFilters(new ContractStatusHistoryDTO());
+        }
+        filterRequest.getFilters().setContractId(contractId);
         return ResponseEntity.ok(contractStatusHistoryService.filterContractStatusHistory(filterRequest));
     }
 
@@ -103,7 +107,9 @@ public class ContractStatusHistoryController {
             @Parameter(description = "ID of the contract status history to retrieve", required = true)
             @PathVariable UUID contractStatusHistoryId) {
         return ResponseEntity.ok(contractStatusHistoryService.getContractStatusHistoryById(contractStatusHistoryId)
-                .filter(history -> history.getContractId().equals(contractId)));
+                .filter(history -> contractId.equals(history.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract status history with ID " + contractStatusHistoryId + " does not belong to contract " + contractId))));
     }
 
     @Operation(summary = "Update contract status history", description = "Updates an existing contract status history with the provided information")
@@ -146,7 +152,9 @@ public class ContractStatusHistoryController {
             @Parameter(description = "ID of the contract status history to delete", required = true)
             @PathVariable UUID contractStatusHistoryId) {
         return contractStatusHistoryService.getContractStatusHistoryById(contractStatusHistoryId)
-                .filter(history -> history.getContractId().equals(contractId))
+                .filter(history -> contractId.equals(history.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract status history with ID " + contractStatusHistoryId + " does not belong to contract " + contractId)))
                 .flatMap(history -> contractStatusHistoryService.deleteContractStatusHistory(contractStatusHistoryId))
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }

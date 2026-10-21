@@ -60,6 +60,10 @@ public class ContractDocumentController {
             @Parameter(description = "ID of the contract", required = true)
             @PathVariable UUID contractId,
             @Valid @RequestBody FilterRequest<ContractDocumentDTO> filterRequest) {
+        if (filterRequest.getFilters() == null) {
+            filterRequest.setFilters(new ContractDocumentDTO());
+        }
+        filterRequest.getFilters().setContractId(contractId);
         return ResponseEntity.ok(contractDocumentService.filterContractDocuments(filterRequest));
     }
 
@@ -103,7 +107,9 @@ public class ContractDocumentController {
             @Parameter(description = "ID of the contract document to retrieve", required = true)
             @PathVariable UUID contractDocumentId) {
         return ResponseEntity.ok(contractDocumentService.getContractDocumentById(contractDocumentId)
-                .filter(document -> document.getContractId().equals(contractId)));
+                .filter(document -> contractId.equals(document.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract document with ID " + contractDocumentId + " does not belong to contract " + contractId))));
     }
 
     @Operation(summary = "Update contract document", description = "Updates an existing contract document with the provided information")
@@ -146,7 +152,9 @@ public class ContractDocumentController {
             @Parameter(description = "ID of the contract document to delete", required = true)
             @PathVariable UUID contractDocumentId) {
         return contractDocumentService.getContractDocumentById(contractDocumentId)
-                .filter(document -> document.getContractId().equals(contractId))
+                .filter(document -> contractId.equals(document.getContractId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Contract document with ID " + contractDocumentId + " does not belong to contract " + contractId)))
                 .flatMap(document -> contractDocumentService.deleteContractDocument(contractDocumentId))
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }

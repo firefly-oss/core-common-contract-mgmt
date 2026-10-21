@@ -82,7 +82,7 @@ public interface ContractEventRepository extends BaseRepository<ContractEvent, U
     /**
      * Count events by contract ID
      */
-    Mono<Long> countByContractId(Long contractId);
+    Mono<Long> countByContractId(UUID contractId);
 
     /**
      * Count events by event type

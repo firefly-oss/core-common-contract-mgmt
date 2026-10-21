@@ -103,7 +103,9 @@ public class ContractTermValidationRuleController {
             @Parameter(description = "ID of the contract term validation rule to retrieve", required = true)
             @PathVariable UUID validationRuleId) {
         return ResponseEntity.ok(contractTermValidationRuleService.getContractTermValidationRuleById(validationRuleId)
-                .filter(rule -> rule.getTermTemplateId().equals(termTemplateId)));
+                .filter(rule -> termTemplateId.equals(rule.getTermTemplateId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Validation rule with ID " + validationRuleId + " does not belong to term template " + termTemplateId))));
     }
 
     @Operation(summary = "Update contract term validation rule", description = "Updates an existing contract term validation rule with the provided information")
@@ -146,7 +148,9 @@ public class ContractTermValidationRuleController {
             @Parameter(description = "ID of the contract term validation rule to delete", required = true)
             @PathVariable UUID validationRuleId) {
         return contractTermValidationRuleService.getContractTermValidationRuleById(validationRuleId)
-                .filter(rule -> rule.getTermTemplateId().equals(termTemplateId))
+                .filter(rule -> termTemplateId.equals(rule.getTermTemplateId()))
+                .switchIfEmpty(Mono.error(new RuntimeException(
+                        "Validation rule with ID " + validationRuleId + " does not belong to term template " + termTemplateId)))
                 .flatMap(rule -> contractTermValidationRuleService.deleteContractTermValidationRule(validationRuleId))
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }
