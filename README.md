@@ -1,9 +1,9 @@
 <a href="https://fireflysoftware.io/openplatform/">
 <picture>
-  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/firefly-oss/.github/main/profile/assets/banner-narrow-dark.svg">
-  <source media="(max-width: 640px)" srcset="https://raw.githubusercontent.com/firefly-oss/.github/main/profile/assets/banner-narrow-light.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/firefly-oss/.github/main/profile/assets/banner-dark.svg">
-  <img src="https://raw.githubusercontent.com/firefly-oss/.github/main/profile/assets/banner-light.svg" alt="Firefly OpenPlatform - Core Common - Contract Management" width="100%">
+  <source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/fireflysoftwaresolutions/.github/main/profile/assets/banner-narrow-dark.svg">
+  <source media="(max-width: 640px)" srcset="https://raw.githubusercontent.com/fireflysoftwaresolutions/.github/main/profile/assets/banner-narrow-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/fireflysoftwaresolutions/.github/main/profile/assets/banner-dark.svg">
+  <img src="https://raw.githubusercontent.com/fireflysoftwaresolutions/.github/main/profile/assets/banner-light.svg" alt="Firefly OpenPlatform - Core Common - Contract Management" width="100%">
 </picture>
 </a>
 
@@ -27,7 +27,7 @@ The Contract Management Microservice handles:
 - **Customer-Product Relationships**: Links customers (partyId) with financial products through contracts
 - **Product Catalog Integration**: Manages relationships with product types (productCatalogId) and specific products (productId). Contracts link parties with product catalog entries (productCatalogId as UUID) and the specific product instances (productId as UUID)
 - **Role Management**: Defines and manages customer roles within contracts
-- **Contract Lifecycle**: Handles contract creation, activation, amendments, suspension, and termination
+- **Contract Lifecycle**: Handles contract creation, activation, suspension, and termination. An amendment or a renewal is a predecessor link, with `link_kind` of `AMENDMENT` or `RENEWAL`
 - **Dynamic Terms**: Supports flexible contract terms that can be configured per contract
 - **Risk Assessment**: Provides contract risk evaluation and scoring capabilities
 - **Event Tracking**: Maintains comprehensive audit trails of contract-related events
@@ -53,7 +53,7 @@ The Contract Management Microservice handles:
 ## Features
 
 ### Core Functionality
-- **Contract Management**: Full CRUD operations for contracts with status tracking
+- **Contract Management**: Create, read, and update contracts, with status tracking. Only a draft contract can be deleted
 - **Party Management**: Associate multiple parties with contracts and define their roles
 - **Dynamic Terms**: Flexible contract terms system with validation rules
 - **Status History**: Complete audit trail of contract status changes
@@ -112,10 +112,26 @@ erDiagram
         uuid contract_id PK "Primary Key - Auto-generated UUID"
         varchar_255 contract_number UK "Unique contract identifier"
         contract_status_enum contract_status "Current status (DRAFT, ACTIVE, etc.)"
+        varchar(3) currency_code "ISO 4217 currency of the agreement"
         timestamp start_date "Contract effective start date"
         timestamp end_date "Contract expiration date"
         uuid product_catalog_id "Reference to product catalog entry in Product Management System"
-        uuid product_id "Reference to specific product instance in Product Management System"
+        uuid product_id "Mirrors the primary contract line"
+        uuid predecessor_contract_id FK "Agreement this one amends or renews"
+        contract_link_kind_enum link_kind "AMENDMENT or RENEWAL when a predecessor is set"
+        timestamp created_at "Record creation timestamp"
+        timestamp updated_at "Last modification timestamp"
+    }
+
+    CONTRACT_LINE {
+        uuid contract_line_id PK "Primary Key - Auto-generated UUID"
+        uuid contract_id FK "Foreign Key to CONTRACT"
+        uuid product_id "Product on this agreement"
+        varchar_50 line_role "Optional role of this product"
+        decimal quantity "Quantity, when set, is zero or greater"
+        timestamp effective_from "When this line becomes effective"
+        timestamp effective_to "When this line ends"
+        boolean is_primary "At most one primary line per contract"
         timestamp created_at "Record creation timestamp"
         timestamp updated_at "Last modification timestamp"
     }
@@ -224,6 +240,7 @@ erDiagram
     }
 
     %% Relationships with cardinality and descriptions
+    CONTRACT ||--o{ CONTRACT_LINE : "has_products"
     CONTRACT ||--o{ CONTRACT_PARTY : "has_parties"
     CONTRACT ||--o{ CONTRACT_DOCUMENT : "has_documents"
     CONTRACT ||--o{ CONTRACT_STATUS_HISTORY : "tracks_status_changes"
@@ -381,7 +398,14 @@ The microservice provides comprehensive REST APIs for contract management:
 - `POST /api/v1/contracts` - Create a new contract
 - `GET /api/v1/contracts/{contractId}` - Get contract by ID
 - `PUT /api/v1/contracts/{contractId}` - Update contract
-- `DELETE /api/v1/contracts/{contractId}` - Delete contract
+- `DELETE /api/v1/contracts/{contractId}` - Delete a draft contract. A contract that has left draft stays on file; terminate or cancel it
+
+#### Contract Lines
+- `POST /api/v1/contracts/{contractId}/lines/filter` - Filter products on the agreement
+- `POST /api/v1/contracts/{contractId}/lines` - Add a product line
+- `GET /api/v1/contracts/{contractId}/lines/{contractLineId}` - Get a product line
+- `PUT /api/v1/contracts/{contractId}/lines/{contractLineId}` - Update a product line
+- `DELETE /api/v1/contracts/{contractId}/lines/{contractLineId}` - Remove a product line
 
 #### Contract Parties
 - `POST /api/v1/contracts/{contractId}/parties/filter` - Filter contract parties
@@ -453,6 +477,7 @@ curl -X POST http://localhost:8080/api/v1/contracts \
   -d '{
     "contractNumber": "CNT-2024-001",
     "contractStatus": "DRAFT",
+    "currencyCode": "USD",
     "startDate": "2024-01-01T00:00:00",
     "endDate": "2024-12-31T23:59:59"
   }'
@@ -484,6 +509,15 @@ Database schema is managed using Flyway migrations located in:
 ### Key Enumerations
 
 - **Contract Status**: DRAFT, PENDING_APPROVAL, ACTIVE, SUSPENDED, TERMINATED, EXPIRED, CANCELLED
+  - `DRAFT` may move to `PENDING_APPROVAL`, `ACTIVE`, or `CANCELLED`
+  - `PENDING_APPROVAL` may move to `DRAFT`, `ACTIVE`, or `CANCELLED`
+  - `ACTIVE` may move to `SUSPENDED`, `TERMINATED`, or `EXPIRED`
+  - `SUSPENDED` may move to `ACTIVE` or `TERMINATED`
+  - `TERMINATED`, `EXPIRED`, and `CANCELLED` stay on file
+  - Only a `DRAFT` contract can be deleted
+- **Currency**: `currency_code` is an ISO 4217 alphabetic code when it is set
+- **Predecessor link**: `predecessor_contract_id` and `link_kind` are set together. `link_kind` is `AMENDMENT` or `RENEWAL`. The predecessor is a different contract
+- **Contract lines**: Each line is a product on the agreement. `contract.product_id` mirrors the primary line, or the first line when none is marked primary. At most one line is primary
 - **Event Types**: CONTRACT_CREATED, CONTRACT_SIGNED, CONTRACT_ACTIVATED, CONTRACT_AMENDED, PAYMENT_DUE, BREACH_REPORTED
 - **Risk Levels**: LOW, MEDIUM, HIGH, CRITICAL
 - **Term Categories**: FINANCIAL, LEGAL, OPERATIONAL, COMPLIANCE, PERFORMANCE, DELIVERY, PAYMENT
